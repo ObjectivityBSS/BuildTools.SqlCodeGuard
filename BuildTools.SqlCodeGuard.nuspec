@@ -1,0 +1,19 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
+  <metadata>
+    <id>BuildTools.SqlCodeGuard</id>
+    <version>%build.number%</version>
+    <title>BuildTools.SqlCodeGuard</title>
+    <authors>Objectivity Bespoke Software Specialists</authors>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <description>A totally unsupported way to quickly add a SQL Code Guard support to your project. Works on my machine.</description>
+    <language>en-US</language>
+    <tags>build buildtools sql code analysis</tags>
+  </metadata>
+  <files>
+    <file src="Readme.txt" target="" />
+    <file src="License.txt" target="" />
+    <file src="tools\**\*.*" target="tools" />
+    <file src="build\**\*.*" target="build" />
+  </files>
+</package>

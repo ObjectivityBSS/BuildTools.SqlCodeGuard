@@ -1,0 +1,106 @@
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+
+  <!-- Define SqlCodeGuardConfigFile property. -->
+  <PropertyGroup Condition="'$(SqlCodeGuardConfigFile)' == ''">
+    <SqlCodeGuardConfigFile>$(MSBuildThisFileDirectory)Settings.SqlCodeGuard</SqlCodeGuardConfigFile>
+  </PropertyGroup>
+
+  <!-- Define SqlCodeGuardIncludeIssue property. -->
+  <PropertyGroup Condition="'$(SqlCodeGuardIncludeIssue)' == ''">
+    <SqlCodeGuardIncludeIssue></SqlCodeGuardIncludeIssue>
+  </PropertyGroup>
+
+  <!-- Define SqlCodeGuardExcludeIssue property. -->
+  <PropertyGroup Condition="'$(SqlCodeGuardExcludeIssue)' == ''">
+    <SqlCodeGuardExcludeIssue></SqlCodeGuardExcludeIssue>
+  </PropertyGroup>
+
+  <!-- Define SqlCodeGuardInFile property. -->
+  <PropertyGroup Condition="'$(SqlCodeGuardInFile)' == ''">
+    <SqlCodeGuardInFile>$(IntermediateOutputPath)SqlCodeGuardInputFiles.txt</SqlCodeGuardInFile>
+  </PropertyGroup>
+
+  <!-- Define SqlCodeGuardOutFile property. -->
+  <PropertyGroup Condition="'$(SqlCodeGuardOutFile)' == ''">
+    <SqlCodeGuardOutFile>$(IntermediateOutputPath)SqlCodeGuardViolations.xml</SqlCodeGuardOutFile>
+  </PropertyGroup>
+
+  <!-- Define SqlCodeGuardTreatWarningsAsErrors property. -->
+  <!-- 0 or 1 is required by PowerShell, $True/$False doesn't work as a parameter when invoking a script from a -File argument -->
+  <PropertyGroup Condition="'$(SqlCodeGuardTreatWarningsAsErrors)' == ''">
+    <SqlCodeGuardTreatWarningsAsErrors>0</SqlCodeGuardTreatWarningsAsErrors>
+  </PropertyGroup>
+
+  <!-- Define SqlCodeGuardTreatIssueAsError property. -->
+  <!-- Should contain issue codes separated with semicolon. -->
+  <!-- The following setting takes a precedence over the SqlCodeGuardTreatWarningsAsErrors setting -->
+  <PropertyGroup Condition="'$(SqlCodeGuardTreatIssueAsError)' == ''">
+    <SqlCodeGuardTreatIssueAsError></SqlCodeGuardTreatIssueAsError>
+  </PropertyGroup>
+
+  <!-- Define SqlCodeGuardTreatIssueAsWarning property. -->
+  <!-- Should contain issue codes separated with semicolon. -->
+  <!-- The following setting takes a precedence over the SqlCodeGuardTreatWarningsAsErrors setting -->
+  <PropertyGroup Condition="'$(SqlCodeGuardTreatIssueAsWarning)' == ''">
+    <SqlCodeGuardTreatIssueAsWarning></SqlCodeGuardTreatIssueAsWarning>
+  </PropertyGroup>
+
+  <!-- Define SqlCodeGuardEnabled property. -->
+  <PropertyGroup Condition="'$(SqlCodeGuardEnabled)' == ''">
+    <SqlCodeGuardEnabled>true</SqlCodeGuardEnabled>
+  </PropertyGroup>
+
+  <!-- Define target: SqlCodeGuard -->
+  <Target Name="SqlCodeGuard" Condition="'$(SqlCodeGuardEnabled)' != 'false'" AfterTargets="BeforeBuild" BeforeTargets="Build">
+
+    <Message Text="Running SQL Scripts Analysis..." Importance="High" />
+
+    <ItemGroup>
+      <SqlCodeGuardInputFile Include="%(EmbeddedResource.Identity)"
+                             Condition="%(EmbeddedResource.Extension)=='.sql' AND %(EmbeddedResource.ExcludeFromSqlCodeGuard)!='true'" />
+      <SqlCodeGuardInputFile Include="%(Content.Identity)"
+                             Condition="%(Content.Extension)=='.sql' AND %(Content.ExcludeFromSqlCodeGuard)!='true'" />
+      <SqlCodeGuardInputFile Include="%(Build.Identity)"
+                             Condition="%(Build.Extension)=='.sql' AND %(Build.ExcludeFromSqlCodeGuard)!='true'" />
+      <SqlCodeGuardInputFile Include="%(None.Identity)"
+                             Condition="%(None.Extension)=='.sql' AND %(None.ExcludeFromSqlCodeGuard)!='true'" />
+      <SqlCodeGuardInputFile Include="%(EmbeddedResource.Identity)"
+                             Condition="%(EmbeddedResource.Extension)=='.resx' AND %(EmbeddedResource.ExcludeFromSqlCodeGuard)!='true'" />
+      <SqlCodeGuardInputFile Include="%(Content.Identity)"
+                             Condition="%(Content.Extension)=='.resx' AND %(Content.ExcludeFromSqlCodeGuard)!='true'" />
+      <SqlCodeGuardInputFile Include="%(Build.Identity)"
+                             Condition="%(Build.Extension)=='.resx' AND %(Build.ExcludeFromSqlCodeGuard)!='true'" />
+      <SqlCodeGuardInputFile Include="%(None.Identity)"
+                             Condition="%(None.Extension)=='.resx' AND %(None.ExcludeFromSqlCodeGuard)!='true'" />
+    </ItemGroup>
+
+    <ConvertToAbsolutePath Paths="$(SqlCodeGuardInFile)">
+      <Output TaskParameter="AbsolutePaths" PropertyName="SqlCodeGuardInFile_Abs" />
+    </ConvertToAbsolutePath>
+
+    <ConvertToAbsolutePath Paths="$(SqlCodeGuardOutFile)">
+      <Output TaskParameter="AbsolutePaths" PropertyName="SqlCodeGuardOutFile_Abs" />
+    </ConvertToAbsolutePath>
+
+    <WriteLinesToFile File="$(SqlCodeGuardInFile_Abs)"
+                      Lines="@(SqlCodeGuardInputFile)"
+                      Overwrite="true"
+                      Encoding="Unicode" />
+    
+    <Exec ConsoleToMSBuild="true"
+          WorkingDirectory="$(MSBuildThisFileDirectory)"
+          Command='powershell -ExecutionPolicy Unrestricted -File "$(MSBuildThisFileDirectory)SqlCodeGuard.Ps1" -BaseDirectory "$(MSBuildProjectDirectory)" -InputFile "$(SqlCodeGuardInFile_Abs)" -CacheFile "$(SqlCodeGuardOutFile_Abs)" -Config "$(SqlCodeGuardConfigFile)" -Include "$(SqlCodeGuardIncludeIssue)" -Exclude "$(SqlCodeGuardExcludeIssue)" -TreatWarningsAsErrors "$(SqlCodeGuardTreatWarningsAsErrors)" -TreatIssueAsWarning "$(SqlCodeGuardTreatIssueAsWarning)" -TreatIssueAsError "$(SqlCodeGuardTreatIssueAsError)"'>
+      <Output TaskParameter="ConsoleOutput" PropertyName="OutputOfExec" />
+    </Exec>
+
+    <CreateItem Include="$(SqlCodeGuardInFile_Abs)" Condition="'$(SqlCodeGuardInFile_Abs)' != ''">
+      <Output TaskParameter="Include" ItemName="FileWrites" />
+    </CreateItem>
+
+    <CreateItem Include="$(SqlCodeGuardOutFile_Abs)" Condition="'$(SqlCodeGuardOutFile_Abs)' != ''">
+      <Output TaskParameter="Include" ItemName="FileWrites" />
+    </CreateItem>
+
+  </Target>
+  
+</Project>
