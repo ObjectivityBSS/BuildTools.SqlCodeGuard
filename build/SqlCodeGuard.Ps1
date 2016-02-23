@@ -213,7 +213,6 @@ function Read-FileAnalysisResultFromCache {
     [OutputType([string])]
     param (
         [Parameter(Mandatory = $true)]
-        [string]
         $AnalyzedFile
     )
     <#
@@ -252,7 +251,6 @@ function Write-FileAnalysisResultToCache {
     [OutputType([void])]
     param (
         [Parameter(Mandatory = $true)]
-        [string]
         $AnalyzedFile,
 
         [Parameter(Mandatory = $false)]
