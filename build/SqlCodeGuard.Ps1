@@ -36,6 +36,14 @@ param (
     $TreatIssueAsError = ''
 )
 
+# load used scripts
+$curDir = Split-Path -Parent $MyInvocation.MyCommand.Definition
+. "$curDir\Format-CommandLine.ps1"
+. "$curDir\Set-EmptyCacheFile.ps1"
+. "$curDir\Clear-CacheIfOutdated.ps1"
+. "$curDir\Read-CacheXml.ps1"
+. "$curDir\Update-CacheXmlConfig.ps1"
+
 # preparing and validating input files
 if (-not(Test-Path -Path $InputFile)) {
     throw "File does not exist: $InputFile"
@@ -69,9 +77,8 @@ foreach ($relativeInputFile in $InputFiles) {
 
 [string]$outputFile = "$($env:TEMP)\SqlCodeGuard.xml"
 [string]$sqlFromResxInputFile = "$($env:TEMP)\SqlCodeGuard.SqlFromResxInputFile.sql"
-[string]$cmdExe = '.\SqlCodeGuard.Cmd.exe'
 
-[xml]$cacheXml = $null
+[xml]$global:cacheXml = '<files/>'
 
 # the following variables are used to check whether the cache is created by tool with current version and the config file was not modified since last analysis
 [string]$currentToolsVersion = '%build.number%' # replaced with current tool version (TeamCity buildstep)
@@ -81,32 +88,6 @@ if (Test-Path -Path $Config) {
 }
 
 # functions
-function Format-CommandLine {
-    [OutputType([string])]
-    param (
-        [Parameter(Mandatory = $true)]
-        [string]
-        $SqlFileToAnalyze
-    )
-
-    [string[]]$args = @()
-    $args += ('-outfile "{0}"' -f "$outputFile")
-    $args += ('-source "{0}"' -f "$SqlFileToAnalyze")
-    if (![string]::IsNullOrWhiteSpace($Config)) {
-        $args += ('-config "{0}"' -f "$Config")
-    }
-    $args += '-quiet'
-    if (![string]::IsNullOrWhiteSpace($Include)) {
-        $args += ('-include "{0}"' -f "$Include")
-    }
-    if (![string]::IsNullOrWhiteSpace($Exclude)) {
-        $args += ('-exclude "{0}"' -f "$Exclude")
-    }
-
-    [string]$command = '"{0}" {1}' -f $cmdExe,($args -join ' ')
-    return $command
-}
-
 function Invoke-SqlFileAnalysis {
     [OutputType([array])]
     param (
@@ -115,7 +96,7 @@ function Invoke-SqlFileAnalysis {
         $Path
     )
 
-    [string]$command = Format-CommandLine -SqlFileToAnalyze $Path
+    [string]$command = Format-CommandLine -SqlFileToAnalyze $Path -OutputFile $outputFile -Config $Config -Include $Include -Exclude $Exclude
     Invoke-Expression "& $command"
 
     [xml]$xml = Get-Content -Path $outputFile
@@ -163,52 +144,6 @@ function Invoke-SqlFileAnalysis {
     return ,$outputIssues
 }
 
-function Set-EmptyCacheFile {
-    [OutputType([void])]
-    param()
-
-    Set-Content -Path $CacheFile -Value "<files toolsVersion='$currentToolsVersion' configTimestamp='$currentConfigTimestamp' />"
-}
-
-function Clear-CacheIfOutdated {
-    [OutputType([void])]
-    param (
-        [Parameter(Mandatory = $true)]
-        [xml]
-        $Xml
-    )
-
-    $files = $Xml.files
-
-    [string]$toolsVersion = $files.GetAttribute('toolsVersion')
-    [string]$configTimestamp = $files.GetAttribute('configTimestamp')
-
-    if ([string]::IsNullOrWhiteSpace($toolsVersion) -or ($currentToolsVersion -ne $toolsVersion) `
-    -or [string]::IsNullOrWhiteSpace($configTimestamp) -or ($currentConfigTimestamp -ne $configTimestamp)) {
-        Set-EmptyCacheFile
-        $Xml = Get-Content -Path $CacheFile
-    }
-}
-
-function Read-CacheXml {
-    [OutputType([xml])]
-    param()
-
-    if ([string]::IsNullOrWhiteSpace($CacheFile)) {
-        return $null
-    }
-    if ($cacheXml -eq $null) {
-        if (-not(Test-Path -Path $CacheFile)) {
-            Set-EmptyCacheFile
-        }
-        $cacheXml = Get-Content -Path $CacheFile
-
-        Clear-CacheIfOutdated -Xml $cacheXml
-    }
-
-    return $cacheXml
-}
-
 function Read-FileAnalysisResultFromCache {
     [OutputType([string])]
     param (
@@ -223,11 +158,11 @@ function Read-FileAnalysisResultFromCache {
         </file>
     </files>
     #>
-    [xml]$xml = Read-CacheXml
-    if ($xml -eq $null) {
+    $global:cacheXml = Read-CacheXml -CurrentCache $global:cacheXml -CacheFile $CacheFile -CurrentToolsVersion $CurrentToolsVersion -CurrentConfigTimestamp $CurrentConfigTimestamp
+    if ($global:cacheXml -eq $null) {
         return $null
     }
-    $files = $xml.files
+    $files = $global:cacheXml.files
 
     if ($files.file.Count -eq 0) {
         return $null
@@ -248,8 +183,12 @@ function Read-FileAnalysisResultFromCache {
 }
 
 function Write-FileAnalysisResultToCache {
-    [OutputType([void])]
+    [OutputType([xml])]
     param (
+        [Parameter(Mandatory = $false)]
+        [xml]
+        $CurrentCache = $null,
+
         [Parameter(Mandatory = $true)]
         $AnalyzedFile,
 
@@ -258,11 +197,11 @@ function Write-FileAnalysisResultToCache {
         $OutputLinesToCache
     )
 
-    [xml]$xml = Read-CacheXml
-    if ($xml -eq $null) {
+    $CurrentCache = Read-CacheXml -CurrentCache $CurrentCache -CacheFile $CacheFile -CurrentToolsVersion $CurrentToolsVersion -CurrentConfigTimestamp $CurrentConfigTimestamp
+    if ($CurrentCache -eq $null) {
         return
     }
-    $files = $xml.files
+    $files = $CurrentCache.files
 
     if ($files.file.Count -gt 0) {
         $files.file `
@@ -271,7 +210,7 @@ function Write-FileAnalysisResultToCache {
             | Out-Null
     }
 
-    [System.Xml.XmlElement]$fileElement = $xml.CreateElement('file')
+    [System.Xml.XmlElement]$fileElement = $CurrentCache.CreateElement('file')
     $fileElement.SetAttribute('name', $AnalyzedFile.Path)
     $fileElement.SetAttribute('timestamp', $AnalyzedFile.Ticks)
     if ($OutputLinesToCache.Count -gt 0) {
@@ -280,24 +219,11 @@ function Write-FileAnalysisResultToCache {
     else {
         $fileElement.InnerText = ''
     }
-    $xml.DocumentElement.AppendChild($fileElement) | Out-Null
-    $xml.Save($CacheFile)
-}
+    $CurrentCache.DocumentElement.AppendChild($fileElement) | Out-Null
+    $CurrentCache.Save($CacheFile)
 
-function Update-CacheXml {
-    [OutputType([void])]
-    param()
-
-    [xml]$xml = Read-CacheXml
-    if ($xml -eq $null) {
-        return
+    return $CurrentCache
     }
-    $files = $xml.files
-    $files.SetAttribute('toolsVersion', $currentToolsVersion)
-    $files.SetAttribute('configTimestamp', $currentConfigTimestamp)
-
-    $xml.Save($CacheFile)
-}
 
 # main code
 foreach ($fileToAnalyze in $filesToAnalyze) {
@@ -316,7 +242,7 @@ foreach ($fileToAnalyze in $filesToAnalyze) {
             $outputLinesToCache += $outputLine
             Write-Host -Object $outputLine
         }
-        Write-FileAnalysisResultToCache -AnalyzedFile $fileToAnalyze -OutputLinesToCache $outputLinesToCache
+        $global:cacheXml = Write-FileAnalysisResultToCache -CurrentCache $global:cacheXml -AnalyzedFile $fileToAnalyze -OutputLinesToCache $outputLinesToCache
     }
     elseif ($fileToAnalyze.IsResx) {
         [Reflection.Assembly]::LoadWithpartialName("System.Xml.Linq") | Out-Null
@@ -356,8 +282,8 @@ foreach ($fileToAnalyze in $filesToAnalyze) {
                 }
             }
         }
-        Write-FileAnalysisResultToCache -AnalyzedFile $fileToAnalyze -OutputLinesToCache $outputLinesToCache
+        $global:cacheXml = Write-FileAnalysisResultToCache -CurrentCache $global:cacheXml -AnalyzedFile $fileToAnalyze -OutputLinesToCache $outputLinesToCache
     }
 }
-Update-CacheXml
+Update-CacheXmlConfig -CurrentCache $global:cacheXml -CacheFile $CacheFile -CurrentToolsVersion $currentToolsVersion -CurrentConfigTimestamp $currentConfigTimestamp | Out-Null
 exit $exitCode
