@@ -4,19 +4,15 @@
 #######################################################################################################
 function Set-EmptyCacheFile {
     [OutputType([void])]
-    param(
+    param (
         [Parameter(Mandatory = $true)]
-        [string]
-        $CacheFile,
-
-        [Parameter(Mandatory = $true)]
-        [string]
-        $CurrentToolsVersion,
-
-        [Parameter(Mandatory = $true)]
-        [string]
-        $CurrentConfigTimestamp
+        $Context
     )
 
-    Set-Content -Path $CacheFile -Value "<files toolsVersion='$CurrentToolsVersion' configTimestamp='$CurrentConfigTimestamp' />"
+    if ([string]::IsNullOrWhiteSpace($Context.CacheFile)) {
+        throw '$Context.CacheFile is not set'
+    }
+
+    Set-Content -Path $Context.CacheFile -Value "<files toolsVersion='$($Context.ToolsVersion)' configTimestamp='$($Context.ConfigTimestamp)' />"
+    $Context.CacheXml = [xml](Get-Content -Path $Context.CacheFile)
 }

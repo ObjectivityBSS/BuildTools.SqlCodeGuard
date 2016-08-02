@@ -86,10 +86,10 @@
                       Lines="@(SqlCodeGuardInputFile)"
                       Overwrite="true"
                       Encoding="Unicode" />
-    
+
     <Exec ConsoleToMSBuild="true"
           WorkingDirectory="$(MSBuildThisFileDirectory)"
-          Command='powershell -ExecutionPolicy Unrestricted -File "$(MSBuildThisFileDirectory)SqlCodeGuard.Ps1" -BaseDirectory "$(MSBuildProjectDirectory)" -InputFile "$(SqlCodeGuardInFile_Abs)" -CacheFile "$(SqlCodeGuardOutFile_Abs)" -Config "$(SqlCodeGuardConfigFile)" -Include "$(SqlCodeGuardIncludeIssue)" -Exclude "$(SqlCodeGuardExcludeIssue)" -TreatWarningsAsErrors "$(SqlCodeGuardTreatWarningsAsErrors)" -TreatIssueAsWarning "$(SqlCodeGuardTreatIssueAsWarning)" -TreatIssueAsError "$(SqlCodeGuardTreatIssueAsError)"'>
+          Command='powershell -ExecutionPolicy Unrestricted -File "$(MSBuildThisFileDirectory)SqlCodeGuard.Ps1" -BaseDirectory "$(MSBuildProjectDirectory)" -InputFile "$(SqlCodeGuardInFile_Abs)" -CacheFile "$(SqlCodeGuardOutFile_Abs)" -ConfigFile "$(SqlCodeGuardConfigFile)" -Include "$(SqlCodeGuardIncludeIssue)" -Exclude "$(SqlCodeGuardExcludeIssue)" -TreatWarningsAsErrors "$(SqlCodeGuardTreatWarningsAsErrors)" -TreatIssueAsWarning "$(SqlCodeGuardTreatIssueAsWarning)" -TreatIssueAsError "$(SqlCodeGuardTreatIssueAsError)"'>
       <Output TaskParameter="ConsoleOutput" PropertyName="OutputOfExec" />
     </Exec>
 
@@ -102,5 +102,5 @@
     </CreateItem>
 
   </Target>
-  
+
 </Project>

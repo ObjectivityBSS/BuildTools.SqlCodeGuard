@@ -3,37 +3,25 @@
 ## Description:      Reads the current SCG output cache.
 #######################################################################################################
 function Read-CacheXml {
-    [OutputType([xml])]
-    param(
-        [Parameter(Mandatory = $false)]
-        [xml]
-        $CurrentCache = $null,
-
+    [OutputType([bool])]
+    param (
         [Parameter(Mandatory = $true)]
-        [string]
-        $CacheFile,
-
-        [Parameter(Mandatory = $true)]
-        [string]
-        $CurrentToolsVersion,
-
-        [Parameter(Mandatory = $true)]
-        [string]
-        $CurrentConfigTimestamp
+        $Context
     )
 
-    if ([string]::IsNullOrWhiteSpace($CacheFile)) {
-        return $null
+    if ([string]::IsNullOrWhiteSpace($Context.CacheFile)) {
+        $Context.CacheXml = $null
+        return $false
     }
 
-    if ($CurrentCache -eq $null) {
-        if (-not(Test-Path -Path $CacheFile)) {
-            Set-EmptyCacheFile -CacheFile $CacheFile -CurrentToolsVersion $CurrentToolsVersion -CurrentConfigTimestamp $CurrentConfigTimestamp
+    if ($Context.CacheXml -eq $null) {
+        if (-not(Test-Path -Path $Context.CacheFile)) {
+            Set-EmptyCacheFile -Context $Context
         }
-        $CurrentCache = Get-Content -Path $CacheFile
 
-        $CurrentCache = Clear-CacheIfOutdated -CurrentCache $CurrentCache -CacheFile $CacheFile -CurrentToolsVersion $CurrentToolsVersion -CurrentConfigTimestamp $CurrentConfigTimestamp
+        $Context.CacheXml = Get-Content -Path $Context.CacheFile
+        Clear-CacheIfOutdated -Context $Context
     }
 
-    return $CurrentCache
+    return $true
 }

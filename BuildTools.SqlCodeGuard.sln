@@ -1,40 +1,31 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 2013
-VisualStudioVersion = 12.0.31101.0
+# Visual Studio 14
+VisualStudioVersion = 14.0.25420.1
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "NuGet Package", "NuGet Package", "{0AE97B23-C2F1-4FA8-959A-A1147EB028DF}"
-	ProjectSection(SolutionItems) = preProject
-		BuildTools.SqlCodeGuard.nuspec = BuildTools.SqlCodeGuard.nuspec
-		License.txt = License.txt
-		Readme.txt = Readme.txt
-	EndProjectSection
+Project("{F5034706-568F-408A-B7B3-4D38C6DB8A32}") = "BuildTools.SqlCodeGuard", "BuildTools.SqlCodeGuard.pssproj", "{6CAFC0C6-A428-4D30-A9F9-700E829FEA51}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "build", "build", "{4DED5EF9-8F11-4950-A434-F1B7B1383FAA}"
-	ProjectSection(SolutionItems) = preProject
-		build\BuildTools.SqlCodeGuard.Targets = build\BuildTools.SqlCodeGuard.Targets
-		build\Settings.SqlCodeGuard = build\Settings.SqlCodeGuard
-		build\SqlCodeGuard.API.dll = build\SqlCodeGuard.API.dll
-		build\SqlCodeGuard.Cmd.exe = build\SqlCodeGuard.Cmd.exe
-		build\SqlCodeGuard.Ps1 = build\SqlCodeGuard.Ps1
-		build\SqlCodeGuard.SettingsEditor.exe = build\SqlCodeGuard.SettingsEditor.exe
-	EndProjectSection
-EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tools", "tools", "{59DAA98A-6C01-4F30-9369-E7AF18A300F1}"
-	ProjectSection(SolutionItems) = preProject
-		tools\BuildTools.MsBuild.psm1 = tools\BuildTools.MsBuild.psm1
-		tools\BuildTools.SqlCodeGuard.psm1 = tools\BuildTools.SqlCodeGuard.psm1
-		tools\Init.ps1 = tools\Init.ps1
-		tools\Install.ps1 = tools\Install.ps1
-		tools\Uninstall.ps1 = tools\Uninstall.ps1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BuildTools.SqlCodeGuard.UnitTests", "tests\BuildTools.SqlCodeGuard.UnitTests.csproj", "{CA8D3C60-0959-40D2-8690-50BDDAF07978}"
+	ProjectSection(ProjectDependencies) = postProject
+		{6CAFC0C6-A428-4D30-A9F9-700E829FEA51} = {6CAFC0C6-A428-4D30-A9F9-700E829FEA51}
 	EndProjectSection
 EndProject
 Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{6CAFC0C6-A428-4D30-A9F9-700E829FEA51}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6CAFC0C6-A428-4D30-A9F9-700E829FEA51}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6CAFC0C6-A428-4D30-A9F9-700E829FEA51}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6CAFC0C6-A428-4D30-A9F9-700E829FEA51}.Release|Any CPU.Build.0 = Release|Any CPU
+		{CA8D3C60-0959-40D2-8690-50BDDAF07978}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CA8D3C60-0959-40D2-8690-50BDDAF07978}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CA8D3C60-0959-40D2-8690-50BDDAF07978}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CA8D3C60-0959-40D2-8690-50BDDAF07978}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
-	EndGlobalSection
-	GlobalSection(NestedProjects) = preSolution
-		{4DED5EF9-8F11-4950-A434-F1B7B1383FAA} = {0AE97B23-C2F1-4FA8-959A-A1147EB028DF}
-		{59DAA98A-6C01-4F30-9369-E7AF18A300F1} = {0AE97B23-C2F1-4FA8-959A-A1147EB028DF}
 	EndGlobalSection
 EndGlobal
