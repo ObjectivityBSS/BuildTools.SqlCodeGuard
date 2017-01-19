@@ -5,6 +5,9 @@
     <version>%build.number%</version>
     <title>BuildTools.SqlCodeGuard</title>
     <authors>Objectivity Bespoke Software Specialists</authors>
+    <licenseUrl>https://github.com/ObjectivityLtd/BuildTools.SqlCodeGuard/blob/master/License.txt</licenseUrl>
+    <projectUrl>https://github.com/ObjectivityLtd/BuildTools.SqlCodeGuard</projectUrl>
+    <iconUrl>https://github.com/ObjectivityLtd.png</iconUrl>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <description>A totally unsupported way to quickly add a SQL Code Guard support to your project. Works on my machine.</description>
     <language>en-US</language>
